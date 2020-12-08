@@ -1,0 +1,25 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "jobtime"
+  namespace: "default"
+  labels:
+    app: "jobtime"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "jobtime"
+  template:
+    metadata:
+      labels:
+        app: "jobtime"
+    spec:
+      containers:
+      - name: "jobtime"
+        image: "gcr.io/datadog-sandbox/jobtime:latest"
+        env:
+          - name: AGENT_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
