@@ -1,0 +1,17 @@
+apiVersion: batch/v1beta1 
+kind: CronJob 
+metadata: 
+  name: duplexjobtest 
+spec: 
+  schedule: "*/1 * * * *" 
+  concurrencyPolicy: Forbid 
+  jobTemplate: 
+    spec: 
+      template:
+        spec: 
+          containers: 
+          - name: duplexjobtest 
+            image: centos:latest 
+            command: ["sleep"] 
+            args: ["600"] 
+          restartPolicy: Never 
