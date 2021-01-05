@@ -17,55 +17,51 @@ def main():
     }
     initialize(**options)
 
-    
-    # logging.warning(st)
-    # logging.warning(ns)
-    # logging.warning(jn)
-    #testgetInfo()
-    #print(st)
     i=0
     while (1):
         #i+=1
-        st,ns,jn=getInfo()
-        if st!=0 and jn!="":
-            statsd.gauge('job_uptime', st, tags=["namespace:"+ns,"jobname:"+jn])
+        l1,l2=getInfo()
+        for s in l1:
+            ns,jn=getjn(s)
+            for s2 in l2:
+                ns2,jn2=getjn(s2)
+                if ns==ns2 and jn==jn2:
+                    starttime=s2.split(' ')[1]
+                    now=time.time()
+                    uptime=now-float(starttime)
+                    print(ns + "   " + jn + "   " + str(uptime))
+                    statsd.gauge('job_uptime', uptime, tags=["namespace:"+ns,"jobname:"+jn])
+        # if st!=0 and jn!="":
+        #     statsd.gauge('job_uptime', st, tags=["namespace:"+ns,"jobname:"+jn])
         time.sleep(15)
         #if i>10:
             #break
 
-def testgetInfo():
-    now=time.time()
-    starttime='1.607067512e+09'
-    returnValue=now - float(starttime)
-    print(returnValue)
-
 def getInfo():
     print("start getInfo")
     #please replace the pod ip
-    res=requests.get('http://10.244.0.5:8080/metrics')
+    res=requests.get('http://10.244.1.7:8080/metrics')
     print("getRes")
-    namespace=""
-    jobname=""
-    starttime=0
+    listActiveJob=[]
+    listStartTime=[]
     for line in res.text.splitlines():
         # print line
-        if line.startswith('kube_job_status_active') and line.endswith('1'):
-            namespace, jobname=getjn(line)
-            print(jobname)
+        if line.startswith('kube_job_status_active') and line.rstrip().endswith('1'):
+            listActiveJob.append(line)
+            # namespace, jobname=getjn(line)
+            # print(jobname)
         if line.startswith('kube_job_status_start_time'):
-            if jobname=="":
-                return 0,None,None
-            ns, jn=getjn(line)
-            if jn==jobname and ns==namespace:
-                starttime=line.split(' ')[1]
-
-    #print(namespace)
-    #print(jobname)
-    #print(starttime)
-
-    now=time.time()
-    uptime=now-float(starttime)
-    return uptime,namespace,jobname
+            listStartTime.append(line)
+            # if jobname=="":
+            #     return 0,None,None
+            # ns, jn=getjn(line)
+            # if jn==jobname and ns==namespace:
+            #     starttime=line.split(' ')[1]
+    return listActiveJob,listStartTime
+    
+    # now=time.time()
+    # uptime=now-float(starttime)
+    # return uptime,namespace,jobname
 
 def getjn(s):
     ns=re.findall(r'namespace="(.+?)"',s)[0]
